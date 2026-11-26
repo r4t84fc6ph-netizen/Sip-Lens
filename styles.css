@@ -146,6 +146,10 @@ dl.sum dd { margin: 2px 0 0; overflow-wrap: anywhere; }
 .arrow.evidence.left .head { border-right-color: var(--accent); }
 .arrow.evidence .txt { color: var(--accent-ink); font-weight: 500; }
 .arrow.fail .line { border-top: 2px dashed var(--bad); }
+.arrow.rtp .line { border-top: 2px dashed var(--accent); }
+.arrow.rtp.right .head { border-left-color: var(--accent); }
+.arrow.rtp.left .head { border-right-color: var(--accent); }
+.arrow.rtp .txt { color: var(--accent-ink); }
 .arrow.fail.right .head { border-left-color: var(--bad); }
 .arrow.fail.left .head { border-right-color: var(--bad); }
 .arrow.fail .txt { color: var(--bad); font-weight: 600; }
@@ -157,7 +161,8 @@ table.list td:first-child, table.list th:first-child { padding-left: 16px; }
 table.list tr.fail { background: var(--bad-bg); }
 table.list td:nth-child(5) { white-space: nowrap; }
 .caveat { margin: 0; padding: 14px 16px; border: 1px dashed var(--line-2); border-radius: 6px; font-size: 15px; color: var(--ink-3); }
-.lrow.media .ltime { color: var(--bad); }
+.lrow.media .ltime { color: var(--accent-ink); }
+.lrow.media.fail .ltime { color: var(--bad); }
 table.list tr.fail td:last-child { color: var(--bad); font-weight: 600; }
 
 /* Messages */

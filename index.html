@@ -38,8 +38,8 @@
       <form class="split-main" id="form" novalidate>
         <div class="drop" id="drop">
           <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2B44D9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"></path><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path></svg>
-          <p style="font-size:20px;font-weight:500">Drop a trace file here</p>
-          <p class="hint">Text traces (.txt, .log) from sngrep, ngrep or your PBX/SBC</p>
+          <p style="font-size:20px;font-weight:500">Drop a capture or trace file here</p>
+          <p class="hint">.pcap, .pcapng, or a text trace from sngrep, ngrep or your PBX</p>
           <label class="file-btn">Choose file<input type="file" id="file" accept=".txt,.log,.sip,.pcap,.pcapng,text/plain"></label>
           <p class="hint" id="file-name" aria-live="polite"></p>
         </div>
@@ -80,10 +80,11 @@
   <section id="view-messages" hidden></section>
 </main>
 
-<footer class="foot"><div class="wrap">SIP Lens is an early prototype by Miguel Fernandes. It recognises five common failures; always check its evidence before acting on it.</div></footer>
+<footer class="foot"><div class="wrap">SIP Lens is an early prototype by Miguel Fernandes. It recognises a handful of common failures; always check its evidence before acting on it.</div></footer>
 
 <script src="src/parser.js"></script>
 <script src="src/rules.js"></script>
+<script src="src/pcap.js"></script>
 <script src="src/samples.js"></script>
 <script src="src/app.js"></script>
 </body>

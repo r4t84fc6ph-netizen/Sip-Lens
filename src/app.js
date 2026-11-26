@@ -51,7 +51,7 @@
     var list = $('samples');
     (S.samples || []).forEach(function (s) {
       list.appendChild(el('li', {}, [
-        el('button', { type: 'button', class: 'sample', onclick: function () { state.name = s.file; analyse(s.text); } }, [
+        el('button', { type: 'button', class: 'sample', onclick: function () { state.name = s.file; if (s.pcap) analyseCapture(base64ToBuffer(s.pcap)); else analyse(s.text); } }, [
           el('span', {}, [el('span', { class: 'sample-t', text: s.title }), el('span', { class: 'sample-h', text: s.hint })]),
           el('span', { 'aria-hidden': 'true', text: '→' })
         ])
@@ -69,23 +69,21 @@
     if (!file) return;
     $('file-name').textContent = file.name;
     state.name = file.name;
-    if (/\.(pcap|pcapng|cap)$/i.test(file.name)) {
-      showError('pcap files aren’t supported yet. Export the call as text instead, for example from sngrep or with "ngrep -W byline port 5060", or paste the messages below.');
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) { showError('This file is larger than 50 MB. Export only the call you need.'); return; }
+    if (file.size > 200 * 1024 * 1024) { showError('This file is larger than 200 MB. Filter the capture down to the call you need first.'); return; }
     var reader = new FileReader();
     reader.onload = function () {
-      var text = String(reader.result || '');
+      var buf = reader.result;
+      if (S.isCapture(buf)) { analyseCapture(buf); return; }
+      var text = new TextDecoder('utf-8').decode(buf);
       if (/[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 2000))) {
-        showError('This looks like a binary file. SIP Lens reads text traces for now.');
+        showError('This doesn\u2019t look like a text trace or a pcap/pcapng capture.');
         return;
       }
       $('paste').value = text;
       showError('');
     };
     reader.onerror = function () { showError('The file couldn’t be read.'); };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   }
 
   function bindUpload() {
@@ -111,17 +109,39 @@
     $('main').focus();
   }
 
+  function base64ToBuffer(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  function analyseCapture(buffer) {
+    var parsed;
+    try { parsed = S.parseCapture(buffer); }
+    catch (e) { showError(e.message || 'The capture couldn\u2019t be read.'); return; }
+    if (!parsed.messages.length) {
+      showError('No SIP messages were found in this capture (' + parsed.source.packets + ' packets). SIP over TLS can\u2019t be read; if the capture is filtered, make sure it includes port 5060.');
+      return;
+    }
+    show(parsed);
+  }
+
   function analyse(text) {
     if (!text || !text.trim()) { showError('Paste a trace or choose a file first.'); return; }
     var parsed = S.parseTrace(text);
     if (!parsed.messages.length) { showError('No SIP messages were found. Each message should start with a line like "INVITE sip:... SIP/2.0" or "SIP/2.0 200 OK".'); return; }
+    show(parsed);
+  }
+
+  function show(parsed) {
     showError('');
     state.parsed = parsed;
     state.dx = S.diagnose(parsed);
     state.anon = $('anon').checked ? S.makeAnonymiser() : identity;
     state.finding = 0;
     var f = state.dx.findings[0];
-    state.msg = f ? (f.evidence[0] ? f.evidence[0].msg : f.failMsg) : 1;
+    state.msg = f ? ((f.evidence[0] && f.evidence[0].msg) || f.failMsg) : 1;
     $('view-upload').hidden = true;
     $('tabs').hidden = false;
     setTopMeta(true);
@@ -200,14 +220,15 @@
 
       var ev = el('ol', { class: 'ev' });
       f.evidence.forEach(function (e, i) {
-        var m = state.parsed.messages[e.msg - 1];
+        var m = e.msg ? state.parsed.messages[e.msg - 1] : null;
         ev.appendChild(el('li', {}, [
           el('span', { class: 'ev-n', text: String(i + 1).padStart(2, '0') }),
           el('div', { class: 'ev-body' }, [
             el('p', { text: a(e.note) }),
-            el('code', { text: 'Message ' + e.msg + ' · ' + msgLabel(m) + (e.lineNo ? ' · line ' + (e.lineNo + 1) : '') + (m && e.text === m.lines[0] ? '' : ' · ' + a(e.text)) })
+            el('code', { text: m ? 'Message ' + e.msg + ' · ' + msgLabel(m) + (e.lineNo ? ' · line ' + (e.lineNo + 1) : '') + (e.text === m.lines[0] ? '' : ' · ' + a(e.text)) : a(e.text) })
           ]),
-          el('button', { type: 'button', class: 'linkish', text: 'View message', onclick: function () { go('messages', { msg: e.msg }); } })
+          m ? el('button', { type: 'button', class: 'linkish', text: 'View message', onclick: function () { go('messages', { msg: e.msg }); } })
+            : el('button', { type: 'button', class: 'linkish', text: 'View in diagram', onclick: function () { go('diagram'); } })
         ]));
       });
       main.appendChild(el('section', { class: 'stack', 'aria-labelledby': 'ev-title' }, [
@@ -230,7 +251,7 @@
         var also = el('ul', { class: 'also' });
         state.dx.findings.forEach(function (o, i) {
           if (i === state.finding) return;
-          also.appendChild(el('li', {}, [el('button', { type: 'button', onclick: function () { state.finding = i; state.msg = o.evidence[0] ? o.evidence[0].msg : o.failMsg; go('diagnosis'); } }, [
+          also.appendChild(el('li', {}, [el('button', { type: 'button', onclick: function () { state.finding = i; state.msg = (o.evidence[0] && o.evidence[0].msg) || o.failMsg; go('diagnosis'); } }, [
             el('span', { style: 'font-weight:500', text: o.title }),
             el('span', { class: 'hint', text: o.badge + ' · ' + a(o.code) })
           ])]));
@@ -269,6 +290,8 @@
       if (call.duration !== null) row('Time span', call.duration + ' s');
     }
     row('Call legs in trace', state.dx.calls.length);
+    if (state.parsed.source) row('Source', state.parsed.source.format + ' capture, ' + state.parsed.source.packets + ' packets');
+    if (state.parsed.rtp) row('Audio streams', state.parsed.rtp.length ? state.parsed.rtp.map(function (s) { return a(s.src) + ' \u2192 ' + a(s.dst) + ': ' + s.packets; }).join('; ') : 'None in the capture');
     row('Hosts', state.parsed.participants.map(function (p) { return a(p.ip); }).join(' · ') || 'No network info in trace');
     return el('aside', { class: 'dx-side', 'aria-labelledby': 'sum-title' }, [
       el('h2', { id: 'sum-title', class: 'lbl', text: 'Call summary' }), dl,
@@ -284,7 +307,7 @@
     var a = state.anon;
     var f = state.dx.findings[state.finding];
     var msgs = state.parsed.messages;
-    var lanes = state.parsed.participants;
+    var lanes = lanesFor();
     var canDraw = lanes.length >= 2 && msgs.every(function (m) { return m.meta.src && m.meta.dst; });
     var mode = canDraw ? state.diagramMode : 'list';
 
@@ -297,12 +320,12 @@
       el('div', { class: 'head-row' }, [
         el('div', { class: 'stack', style: 'gap:8px' }, [
           el('h1', { style: 'font-size:36px;letter-spacing:-0.025em', text: 'Call diagram' }),
-          el('p', { class: 'hint', style: 'font-size:16px;color:var(--ink-3)', text: msgs.length + ' SIP messages' + (lanes.length ? ' between ' + lanes.length + ' hosts' : '') + (span.length ? ', over ' + Math.round(span[span.length - 1].time) + ' seconds.' : '.') })
+          el('p', { class: 'hint', style: 'font-size:16px;color:var(--ink-3)', text: msgs.length + ' SIP messages' + ((state.parsed.rtp || []).length ? ' and ' + state.parsed.rtp.length + ' audio streams' : '') + (lanes.length ? ' between ' + lanes.length + ' hosts' : '') + (span.length ? ', over ' + Math.round(span[span.length - 1].time) + ' seconds.' : '.') })
         ]),
         seg
       ]),
       f ? el('button', { type: 'button', class: 'failbar', style: 'border:0;text-align:left;cursor:pointer', onclick: function () { go('messages', { msg: f.failMsg }); } }, [
-        el('b', {}, [svgIcon('warn', '#9A1C12'), f.media ? ' Failure point: return audio, after message ' + f.media.after : ' Failure point: message ' + f.failMsg]),
+        el('b', {}, [svgIcon('warn', '#9A1C12'), f.media ? (f.media.stream && f.media.stream.start !== null ? ' Failure point: return audio, from ' + f.media.stream.start.toFixed(2) + ' s' : ' Failure point: return audio, after message ' + f.media.after) : ' Failure point: message ' + f.failMsg]),
         el('span', { text: f.title }),
         el('span', { class: 'linkish', style: 'margin-left:auto', text: 'Open message' })
       ]) : null,
@@ -311,6 +334,7 @@
       mode === 'diagram' ? el('p', { class: 'legend' }, [
         el('span', { text: 'Solid line: SIP message' }),
         el('span', { style: 'color:var(--accent-ink)', text: 'Blue: used as evidence' }),
+        (state.parsed.rtp || []).length ? el('span', { style: 'color:var(--accent-ink)', text: 'Dashed blue: audio (RTP)' }) : null,
         el('span', { style: 'color:var(--bad)', text: 'Red, dashed, with ×: failure point' }),
         el('span', { text: 'Times in seconds from the first message' })
       ]) : null
@@ -328,101 +352,140 @@
     return { ip: a(p.ip), ports: p.ports.join(', '), tags: tags };
   }
 
+  var CODEC_NAMES = { 0: 'PCMU', 8: 'PCMA', 9: 'G.722', 18: 'G.729' };
+
+  function rtpText(s) {
+    return 'RTP · ' + (CODEC_NAMES[s.payloadType] || 'PT ' + s.payloadType) + ' · ' + s.packets + ' packets' + (s.lost ? ' (' + s.lost + ' lost)' : '');
+  }
+
+  /** SIP hosts plus any host that only shows up in the audio. */
+  function lanesFor() {
+    var lanes = state.parsed.participants.map(function (p) { return { ip: p.ip, ports: p.ports.slice() }; });
+    (state.parsed.rtp || []).forEach(function (s) {
+      [s.src, s.dst].forEach(function (ip) {
+        if (!lanes.some(function (l) { return l.ip === ip; })) lanes.push({ ip: ip, ports: [] });
+      });
+    });
+    return lanes;
+  }
+
+  /** Messages and audio streams in time order. The failing audio, if any, is marked. */
+  function timeline(f) {
+    var rows = state.parsed.messages.map(function (m) { return { type: 'msg', m: m, t: m.time }; });
+    var failStream = f && f.media && f.media.stream;
+    var streams = (state.parsed.rtp || []).slice().sort(function (x, y) { return (x.start || 0) - (y.start || 0); });
+    streams.forEach(function (s) {
+      var at = -1;
+      rows.forEach(function (r, i) { if (r.t !== null && s.start !== null && r.t <= s.start) at = i; });
+      rows.splice(at + 1, 0, { type: 'rtp', s: s, t: s.start, fail: s === failStream });
+    });
+    if (f && f.media && !failStream) {
+      var after = -1;
+      rows.forEach(function (r, i) { if (r.type === 'msg' && r.m.index === f.media.after) after = i; });
+      rows.splice(after + 1, 0, { type: 'media', media: f.media, t: null, fail: true });
+    }
+    return rows;
+  }
+
   function ladder(f) {
-    var lanes = state.parsed.participants;
+    var lanes = lanesFor();
     var L = lanes.length;
     var pos = {};
     lanes.forEach(function (p, i) { pos[p.ip] = i; });
     var centre = function (i) { return (i + 0.5) / L * 100; };
     var ev = {};
-    if (f) f.evidence.forEach(function (e) { ev[e.msg] = true; });
+    if (f) f.evidence.forEach(function (e) { if (e.msg) ev[e.msg] = true; });
 
     var heads = el('div', { class: 'lane-heads', style: 'grid-template-columns:repeat(' + L + ', minmax(0, 1fr))' });
     lanes.forEach(function (p) {
       var n = laneName(p);
       heads.appendChild(el('div', { class: 'lane-head' }, [
-        n.ip, el('small', { text: 'port ' + n.ports }),
+        n.ip, el('small', { text: n.ports ? 'port ' + n.ports : 'audio only' }),
         n.tags.length ? el('span', { class: 'tag', text: n.tags.join(' · ') }) : null
       ]));
     });
 
-    var track = el('div', { class: 'rows' });
+    var a = state.anon;
     var rowsWrap = el('div', {});
-    state.parsed.messages.forEach(function (m) {
-      var s = pos[m.meta.src.ip], d = pos[m.meta.dst.ip];
-      var right = d > s;
-      var isFail = f && !f.media && f.failMsg === m.index;
-      var cls = 'arrow ' + (right ? 'right' : 'left') + (isFail ? ' fail' : ev[m.index] ? ' evidence' : '');
-      var left = centre(Math.min(s, d)), width = Math.abs(centre(d) - centre(s)) || 4;
-      var label = msgLabel(m) + (m.sdp ? ' · SDP' : '');
-      var arrow = el('button', {
-        type: 'button', class: cls, style: 'left:' + left + '%;width:' + width + '%',
-        'aria-label': 'Message ' + m.index + ': ' + label + ' from ' + state.anon(m.meta.src.ip) + ' to ' + state.anon(m.meta.dst.ip) + (isFail ? '. Failure point.' : ev[m.index] ? '. Used as evidence.' : ''),
-        onclick: function () { go('messages', { msg: m.index }); }
-      }, [el('span', { class: 'txt', text: m.index + '  ' + label }), el('span', { class: 'line' }), el('span', { class: 'head' })]);
-      if (isFail) arrow.appendChild(el('span', { class: 'x', 'aria-hidden': 'true', style: right ? 'right:-30px' : 'left:-30px', text: '×' }));
-      rowsWrap.appendChild(el('div', { class: 'lrow' }, [
-        el('span', { class: 'ltime', text: m.time === null ? '' : m.time.toFixed(3) }),
+    timeline(f).forEach(function (r) {
+      var from, to, label, cls, aria, time, node;
+      if (r.type === 'msg') {
+        var m = r.m;
+        from = m.meta.src.ip; to = m.meta.dst.ip;
+        var isFail = f && !f.media && f.failMsg === m.index;
+        label = m.index + '  ' + msgLabel(m) + (m.sdp ? ' · SDP' : '');
+        cls = isFail ? ' fail' : ev[m.index] ? ' evidence' : '';
+        aria = 'Message ' + m.index + ': ' + msgLabel(m) + ' from ' + a(from) + ' to ' + a(to) + (isFail ? '. Failure point.' : ev[m.index] ? '. Used as evidence.' : '');
+        time = m.time === null ? '' : m.time.toFixed(3);
+        node = 'button';
+        r.fail = isFail;
+      } else {
+        var s = r.s;
+        from = r.type === 'rtp' ? s.src : r.media.from;
+        to = r.type === 'rtp' ? s.dst : r.media.to;
+        label = r.fail ? a(f.media.label) : rtpText(s);
+        cls = r.fail ? ' fail' : ' rtp';
+        aria = (r.fail ? 'Failure point: ' : 'Audio stream: ') + label + ', from ' + a(from) + ' to ' + a(to) + '.';
+        time = r.type === 'rtp' && s.start !== null ? s.start.toFixed(3) : 'RTP';
+        node = 'div';
+      }
+      var si = pos[from], di = pos[to];
+      if (si === undefined || di === undefined) return;
+      var right = di > si;
+      var attrs = { class: 'arrow ' + (right ? 'right' : 'left') + cls, style: 'left:' + centre(Math.min(si, di)) + '%;width:' + (Math.abs(centre(di) - centre(si)) || 4) + '%', 'aria-label': aria };
+      if (node === 'button') { attrs.type = 'button'; attrs.onclick = (function (idx) { return function () { go('messages', { msg: idx }); }; })(r.m.index); }
+      else { attrs.role = 'img'; attrs.style += ';cursor:default'; }
+      var arrow = el(node, attrs, [el('span', { class: 'txt', text: label }), el('span', { class: 'line' }), el('span', { class: 'head' })]);
+      if (r.fail) arrow.appendChild(el('span', { class: 'x', 'aria-hidden': 'true', style: right ? 'right:-30px' : 'left:-30px', text: '×' }));
+      rowsWrap.appendChild(el('div', { class: 'lrow' + (r.type === 'msg' ? '' : ' media') + (r.fail && r.type !== 'msg' ? ' fail' : '') }, [
+        el('span', { class: 'ltime', text: time }),
         el('div', { class: 'ltrack' }, [arrow])
       ]));
-      if (f && f.media && f.media.after === m.index && pos[f.media.from] !== undefined && pos[f.media.to] !== undefined) {
-        rowsWrap.appendChild(mediaRow(f.media, pos, centre));
-      }
     });
+
+    var track = el('div', { class: 'rows' });
     // Lifelines sit behind the rows, inside the lanes column.
     var lifeWrap = el('div', { style: 'position:absolute;top:0;bottom:0;left:88px;right:0', 'aria-hidden': 'true' });
     lanes.forEach(function (p, i) { lifeWrap.appendChild(el('span', { class: 'lifeline', style: 'left:' + centre(i) + '%' })); });
     track.appendChild(lifeWrap);
     track.appendChild(rowsWrap);
 
-    return el('div', { class: 'panel' }, [el('div', { class: 'ladder' }, [
+    return el('div', { class: 'panel' }, [el('div', { class: 'ladder', style: 'min-width:' + Math.max(760, L * 220) + 'px' }, [
       el('div', { class: 'lanes' }, [el('span', { class: 'lbl', style: 'align-self:end;font-size:11px', text: 'Time' }), heads]),
       track
     ])]);
   }
 
-  /** The audio that should flow but can't: drawn from the finding, not from a message. */
-  function mediaRow(media, pos, centre) {
-    var s = pos[media.from], d = pos[media.to];
-    var right = d > s;
-    var left = centre(Math.min(s, d)), width = Math.abs(centre(d) - centre(s));
-    var label = state.anon(media.label);
-    var arrow = el('div', { class: 'arrow fail ' + (right ? 'right' : 'left'), role: 'img', style: 'left:' + left + '%;width:' + width + '%;cursor:default',
-      'aria-label': 'Failure point: ' + label + ', from ' + state.anon(media.from) + ' to ' + state.anon(media.to) + '.' }, [
-      el('span', { class: 'txt', text: label }), el('span', { class: 'line' }), el('span', { class: 'head' }),
-      el('span', { class: 'x', 'aria-hidden': 'true', style: right ? 'right:-30px' : 'left:-30px', text: '\u00d7' })
-    ]);
-    return el('div', { class: 'lrow media' }, [el('span', { class: 'ltime', text: 'RTP' }), el('div', { class: 'ltrack' }, [arrow])]);
-  }
-
   function listTable(f) {
     var a = state.anon;
     var notes = {};
-    if (f) f.evidence.forEach(function (e) { if (!notes[e.msg]) notes[e.msg] = a(e.note); });
+    if (f) f.evidence.forEach(function (e) { if (e.msg && !notes[e.msg]) notes[e.msg] = a(e.note); });
     var tbody = el('tbody');
-    state.parsed.messages.forEach(function (m) {
-      var isFail = f && !f.media && f.failMsg === m.index;
-      appendRow(m, isFail);
-      if (f && f.media && f.media.after === m.index) {
-        tbody.appendChild(el('tr', { class: 'fail' }, [
-          el('td', { class: 'mono', text: '-' }), el('td', { class: 'mono', text: 'RTP' }),
-          el('td', { text: a(f.media.from) }), el('td', { text: a(f.media.to) }),
-          el('td', { text: 'Audio' }), el('td', { text: 'Failure point. ' + a(f.media.label) + '.' })
+    timeline(f).forEach(function (r) {
+      if (r.type === 'msg') {
+        var m = r.m;
+        var isFail = f && !f.media && f.failMsg === m.index;
+        tbody.appendChild(el('tr', { class: isFail ? 'fail' : null }, [
+          el('td', { class: 'mono', text: String(m.index) }),
+          el('td', { class: 'mono', text: m.time === null ? '-' : m.time.toFixed(3) }),
+          el('td', { text: m.meta.src ? a(m.meta.src.ip) : '-' }),
+          el('td', { text: m.meta.dst ? a(m.meta.dst.ip) : '-' }),
+          el('td', {}, [el('button', { type: 'button', class: 'linkish', style: 'font-size:15px', text: msgLabel(m) + (m.sdp ? ' (SDP)' : ''), onclick: function () { go('messages', { msg: m.index }); } })]),
+          el('td', { text: (isFail ? 'Failure point. ' : '') + (notes[m.index] || '') })
+        ]));
+      } else {
+        var from = r.type === 'rtp' ? r.s.src : r.media.from, to = r.type === 'rtp' ? r.s.dst : r.media.to;
+        tbody.appendChild(el('tr', { class: r.fail ? 'fail' : null }, [
+          el('td', { class: 'mono', text: '-' }),
+          el('td', { class: 'mono', text: r.type === 'rtp' && r.s.start !== null ? r.s.start.toFixed(3) : 'RTP' }),
+          el('td', { text: a(from) }), el('td', { text: a(to) }),
+          el('td', { text: r.type === 'rtp' ? rtpText(r.s) : 'Audio' }),
+          el('td', { text: r.fail ? 'Failure point. ' + a(f.media.label) + '.' : 'Audio stream, until ' + (r.s.end !== null ? r.s.end.toFixed(1) + ' s' : 'the end') + '.' })
         ]));
       }
     });
-    function appendRow(m, isFail) {
-      tbody.appendChild(el('tr', { class: isFail ? 'fail' : null }, [
-        el('td', { class: 'mono', text: String(m.index) }),
-        el('td', { class: 'mono', text: m.time === null ? '-' : m.time.toFixed(3) }),
-        el('td', { text: m.meta.src ? a(m.meta.src.ip) : '-' }),
-        el('td', { text: m.meta.dst ? a(m.meta.dst.ip) : '-' }),
-        el('td', {}, [el('button', { type: 'button', class: 'linkish', style: 'font-size:15px', text: msgLabel(m) + (m.sdp ? ' (SDP)' : ''), onclick: function () { go('messages', { msg: m.index }); } })]),
-        el('td', { text: (isFail ? 'Failure point. ' : '') + (notes[m.index] || '') })
-      ]));
-    }
     return el('div', { class: 'panel' }, [el('table', { class: 'list' }, [
-      el('caption', { class: 'sr-only', text: 'Call messages in order' + (f ? '. Message ' + f.failMsg + ' is the failure point.' : '.') }),
+      el('caption', { class: 'sr-only', text: 'Call messages and audio streams in order' + (f ? '. The failure point is marked.' : '.') }),
       el('thead', {}, [el('tr', {}, ['#', 'Time (s)', 'From', 'To', 'Message', 'Note'].map(function (h) { return el('th', { scope: 'col', class: 'lbl', text: h }); }))]),
       tbody
     ])]);
