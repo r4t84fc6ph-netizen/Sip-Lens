@@ -244,12 +244,49 @@
         label: 'Return audio to ' + conn.address + ':' + (audio ? audio.port : '?')
       } : null;
 
+      var summary = (connected ? 'The call connected, but ' : '') + 'the device asked for audio to be sent to ' + conn.address + ', which can\u2019t be reached from outside its network.' + (natSeen ? ' It sits behind NAT (seen as ' + natSeen + '), and NAT isn\u2019t being handled, so the other side\u2019s audio is likely lost.' : ' If the device is behind NAT, the other side\u2019s audio will be lost.');
+      var caveat = 'Audio (RTP) isn\u2019t part of a text trace. A capture with RTP would confirm that the return audio never arrives.';
+      var kind = natSeen ? 'error' : 'warning';
+
+      // With a capture we can stop guessing and look at the audio itself.
+      var rtp = CTX.rtp;
+      if (rtp && rtp.length) {
+        caveat = null;
+        var port = audio ? audio.port : null;
+        var toPrivate = rtp.filter(function (s) { return s.dst === conn.address && (port === null || s.dport === port); });
+        var fromDevice = natSeen ? rtp.filter(function (s) { return s.src === natSeen; }) : [];
+        var toDevice = natSeen ? rtp.filter(function (s) { return s.dst === natSeen; }) : [];
+        var count = function (list) { return list.reduce(function (n, s) { return n + s.packets; }, 0); };
+
+        if (count(toDevice) > 0) {
+          // The server is already sending audio to the public address: NAT is handled.
+          return {
+            id: 'nat-audio', rule: 'nat-audio', kind: 'info', badge: 'Handled', code: 'Private IP in SDP',
+            title: 'The phone advertises a private address, but audio still flows both ways.',
+            summary: 'The SDP says ' + conn.address + ', yet the capture shows ' + count(toDevice) + ' audio packets going to the phone\u2019s public address, ' + natSeen + '. The server is handling NAT, so this isn\u2019t causing an audio problem.',
+            confidence: 'high', failMsg: m.index, evidence: evidence.concat([{ msg: null, kind: 'rtp', lineNo: 0, text: rtpLabel(toDevice[0]), note: 'Audio is reaching the phone\u2019s public address.' }]),
+            fixes: []
+          };
+        }
+        if (toPrivate.length) {
+          evidence.push({ msg: null, kind: 'rtp', lineNo: 0, text: rtpLabel(toPrivate[0]), note: count(toPrivate) + ' audio packets were sent to ' + conn.address + ':' + port + '. That address is private, so they never reach the phone.' });
+          media = { after: media ? media.after : m.index, from: toPrivate[0].src, to: toPrivate[0].dst, label: 'Return audio to ' + conn.address + ':' + port + ' \u00b7 ' + count(toPrivate) + ' packets', stream: toPrivate[0] };
+        } else {
+          evidence.push({ msg: null, kind: 'rtp', lineNo: 0, text: 'No RTP towards ' + (natSeen || conn.address), note: 'No audio was sent back to the phone at all.' });
+        }
+        if (fromDevice.length) {
+          evidence.push({ msg: null, kind: 'rtp', lineNo: 0, text: rtpLabel(fromDevice[0]), note: count(fromDevice) + ' audio packets arrived from the phone, so audio works in that direction.' });
+        }
+        summary = (connected ? 'The call connected, but ' : '') + 'audio only flows one way. The phone asked for audio to be sent to ' + conn.address + ', a private address that can\u2019t be reached from outside its network' + (natSeen ? ' (the phone sits behind NAT, seen as ' + natSeen + ')' : '') + '. The capture confirms it: ' + (toPrivate.length ? count(toPrivate) + ' packets were sent to that address and none of them can arrive' : 'no audio was sent back to the phone') + (fromDevice.length ? ', while ' + count(fromDevice) + ' arrived from the phone.' : '.');
+        kind = 'error';
+      }
+
       return {
-        id: 'nat-audio', rule: 'nat-audio', kind: natSeen ? 'error' : 'warning', badge: natSeen ? 'Problem found' : 'Possible problem', code: 'Private IP in SDP',
+        id: 'nat-audio', rule: 'nat-audio', kind: kind, badge: kind === 'error' ? 'Problem found' : 'Possible problem', code: 'Private IP in SDP',
         title: 'One-way audio: return audio is sent to a private address.',
-        summary: (connected ? 'The call connected, but ' : '') + 'the device asked for audio to be sent to ' + conn.address + ', which can’t be reached from outside its network.' + (natSeen ? ' It sits behind NAT (seen as ' + natSeen + '), and NAT isn’t being handled, so the other side’s audio is likely lost.' : ' If the device is behind NAT, the other side’s audio will be lost.'),
-        confidence: natSeen ? 'high' : 'medium', failMsg: m.index, evidence: evidence, media: media,
-        caveat: 'Audio (RTP) isn\u2019t part of a text trace. A capture with RTP would confirm that the return audio never arrives.',
+        summary: summary,
+        confidence: (natSeen || (rtp && rtp.length)) ? 'high' : 'medium', failMsg: m.index, evidence: evidence, media: media,
+        caveat: caveat,
         fixes: [
           { title: 'Turn on NAT handling for this device on the PBX or SBC', detail: 'Often called symmetric RTP or "comedia": audio is sent back to where it really comes from, not to the address in the SDP.', primary: true },
           { title: 'Check the router at the site', detail: 'If SIP ALG is on, turn it off and test again.' },
@@ -260,7 +297,15 @@
     return null;
   }
 
+  var CODEC_BY_PT = { 0: 'PCMU', 8: 'PCMA', 9: 'G.722', 18: 'G.729' };
+
+  function rtpLabel(s) {
+    return 'RTP ' + s.src + ':' + s.sport + ' \u2192 ' + s.dst + ':' + s.dport + ' \u00b7 ' + (CODEC_BY_PT[s.payloadType] || 'PT ' + s.payloadType) + ' \u00b7 ' + s.packets + ' packets';
+  }
+
   /* ---------------- Run all rules ---------------- */
+
+  var CTX = { rtp: null };
 
   var ORDER = [ruleCodec, ruleAuth, ruleRejected, ruleMissingAck, ruleNatAudio];
   var KIND_RANK = { error: 0, warning: 1, info: 2 };
@@ -284,6 +329,7 @@
   }
 
   function diagnose(parsed) {
+    CTX = { rtp: parsed.rtp || null };
     var calls = byCall(parsed.messages);
     var findings = [];
     calls.forEach(function (call) {
@@ -318,7 +364,7 @@
     return ['codec', 'auth', 'rejected', 'missing-ack', 'nat-audio'].indexOf(r);
   }
 
-  var api = { diagnose: diagnose, codecNames: codecNames };
+  var api = { diagnose: diagnose, codecNames: codecNames, rtpLabel: rtpLabel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  else { root.SIPLens = root.SIPLens || {}; root.SIPLens.diagnose = diagnose; }
+  else { root.SIPLens = root.SIPLens || {}; root.SIPLens.diagnose = diagnose; root.SIPLens.rtpLabel = rtpLabel; }
 })(this);
