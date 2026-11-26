@@ -8,7 +8,7 @@ SIP Lens is my attempt to close that gap. You give it a trace and it tells you w
 
 It runs entirely in the browser. Traces are full of phone numbers and IP addresses, so nothing gets uploaded anywhere.
 
-> This is an early version. It reads text traces only, not .pcap files yet.
+> This is an early version, so expect rough edges. If it gets something wrong, I'd like to know.
 
 ## What it can spot so far
 
@@ -26,9 +26,13 @@ Every diagnosis comes with the evidence behind it. If it says the problem is on 
 
 There's nothing to install. Download or clone the repo and open `index.html` in your browser.
 
-The page has five sample traces, one for each case above. They use made-up numbers and the IP ranges reserved for documentation.
+The page has sample traces for each case above, plus a capture of the one-way audio call with its audio included. They use made-up numbers and the IP ranges reserved for documentation.
 
-To use your own trace, paste the SIP messages or load a .txt file. If each message has a line with its addresses before it, like the ones ngrep and sngrep write, you also get the call diagram:
+To use your own trace, drop in a .pcap or .pcapng capture, or paste the SIP messages as text.
+
+With a capture it also counts the audio (RTP) streams, so for one-way audio it doesn't have to guess: it can show the packets going to an address that can't be reached, or tell you the server is already handling NAT and the problem is somewhere else.
+
+For text, it reads a .txt file or whatever you paste. If each message has a line with its addresses before it, like the ones ngrep and sngrep write, you also get the call diagram:
 
 ```
 U 2026/11/26 10:15:02.000000 203.0.113.24:41872 -> 198.51.100.10:5060
@@ -52,12 +56,14 @@ Plain HTML, CSS and JavaScript, no framework and no build step.
 index.html              the page
 styles.css
 src/parser.js           turns trace text into messages, headers and SDP
+src/pcap.js             reads .pcap/.pcapng files: SIP messages and RTP streams
 src/rules.js            one function per failure it can recognise
 src/app.js              diagnosis, call diagram, list and message views
 src/samples.js          generated from samples/*.txt
 samples/                example traces
 test/run.js             tests, run with Node
 tools/build-samples.js  rebuilds src/samples.js after you edit a sample
+tools/make-pcap.js      builds the sample capture from a text trace
 ```
 
 Running the tests (needs Node.js):
@@ -74,7 +80,8 @@ The call diagram also has a list view with the same information, for screen read
 
 ## What's next
 
-- Reading .pcap and .pcapng files, including RTP, so one-way audio can be confirmed and not just inferred
+- SIP over TCP split across several segments (for now each segment is read on its own)
+- Audio quality from RTP: packet loss and jitter, not just whether audio arrives
 - More cases: hold and re-INVITE problems, session timers, early media
 - A shareable report of a diagnosis
 
