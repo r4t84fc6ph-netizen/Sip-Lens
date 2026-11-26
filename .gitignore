@@ -2,5 +2,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 .vscode/
+# Keep real captures out of the repo by accident; the sample is fine.
 *.pcap
 *.pcapng
+!samples/*.pcap
