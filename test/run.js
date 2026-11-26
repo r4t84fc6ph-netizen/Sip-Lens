@@ -92,4 +92,74 @@ test('codec names come from the SDP', () => {
   assert.strictEqual(d.findings[0].legs, 2);
 });
 
+console.log('Captures');
+const C = require('../src/pcap.js');
+const M = require('../tools/make-pcap.js');
+const asAB = (buf) => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.length);
+const oneWayText = fs.readFileSync(path.join(dir, 'one-way-audio.txt'), 'utf8');
+
+test('reads the sample .pcap: SIP and RTP', () => {
+  const p = C.parseCapture(asAB(fs.readFileSync(path.join(dir, 'one-way-audio.pcap'))));
+  assert.strictEqual(p.source.format, 'pcap');
+  assert.strictEqual(p.messages.length, 13);
+  assert.strictEqual(p.messages[0].meta.src.ip, '203.0.113.24');
+  assert.strictEqual(p.rtp.length, 2);
+  assert.ok(p.rtp.every((s) => s.packets > 200 && s.lost === 0));
+});
+test('reads the same call as .pcapng with nanosecond timestamps', () => {
+  const p = C.parseCapture(asAB(M.toPcapng(M.packets(oneWayText, M.ONE_WAY))));
+  assert.strictEqual(p.source.format, 'pcapng');
+  assert.strictEqual(p.messages.length, 13);
+  assert.strictEqual(p.messages[6].time, 3.808);
+  assert.strictEqual(p.rtp[0].start, 3.95);
+});
+test('RTP confirms one-way audio', () => {
+  const p = C.parseCapture(asAB(fs.readFileSync(path.join(dir, 'one-way-audio.pcap'))));
+  const f = R.diagnose(p).findings[0];
+  assert.strictEqual(f.rule, 'nat-audio');
+  assert.strictEqual(f.kind, 'error');
+  assert.strictEqual(f.caveat, null);
+  assert.ok(f.media.stream && f.media.stream.dst === '192.168.1.45');
+  assert.ok(f.evidence.some((e) => e.kind === 'rtp' && /260 audio packets were sent/.test(e.note)));
+});
+test('no false alarm when the server already handles NAT', () => {
+  const opts = { shift: M.ONE_WAY.shift, rtp: [
+    { from: '203.0.113.24:41010', to: '198.51.100.10:30002', start: 3.95, end: 6 },
+    { from: '198.51.100.10:30002', to: '203.0.113.24:41010', start: 3.96, end: 6 }
+  ] };
+  const p = C.parseCapture(asAB(M.toPcap(M.packets(oneWayText, opts))));
+  const f = R.diagnose(p).findings[0];
+  assert.strictEqual(f.kind, 'info');
+  assert.strictEqual(f.badge, 'Handled');
+});
+test('reassembles a SIP message split into IPv4 fragments', () => {
+  const pk = M.packets(oneWayText, { shift: M.ONE_WAY.shift })[0];
+  const frame = pk.data;                 // Ethernet + IPv4 + UDP + INVITE
+  const ip = frame.subarray(14);
+  const ihl = (ip[0] & 15) * 4;
+  const l4 = ip.subarray(ihl);
+  const cut = 200;                       // must be a multiple of 8
+  const mk = (part, offset, more) => {
+    const h = Buffer.from(ip.subarray(0, ihl));
+    h.writeUInt16BE(ihl + part.length, 2);
+    h.writeUInt16BE((more ? 0x2000 : 0) | (offset / 8), 6);
+    return Buffer.concat([frame.subarray(0, 14), h, part]);
+  };
+  const list = [{ ts: pk.ts, data: mk(l4.subarray(cut), cut, false) }, { ts: pk.ts, data: mk(l4.subarray(0, cut), 0, true) }];
+  const p = C.parseCapture(asAB(M.toPcap(list)));
+  assert.strictEqual(p.messages.length, 1);
+  assert.strictEqual(p.messages[0].sdp.connection.address, '192.168.1.45');
+});
+test('understands VLAN tags', () => {
+  const pk = M.packets(oneWayText, {})[1];
+  const tagged = Buffer.concat([pk.data.subarray(0, 12), Buffer.from([0x81, 0, 0, 10]), pk.data.subarray(12)]);
+  const p = C.parseCapture(asAB(M.toPcap([{ ts: pk.ts, data: tagged }])));
+  assert.strictEqual(p.messages.length, 1);
+  assert.strictEqual(p.messages[0].status, 100);
+});
+test('rejects files that are not captures', () => {
+  assert.ok(!C.isCapture(asAB(Buffer.from('INVITE sip:a@b SIP/2.0\r\n\r\n'.repeat(3)))));
+  assert.throws(() => C.readCapture(asAB(Buffer.alloc(64))));
+});
+
 console.log('\n' + passed + ' passed' + (process.exitCode ? ', some failed' : ''));
