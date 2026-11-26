@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIP Lens - Why did this call fail?</title>
+<meta name="description" content="Load a SIP trace and get the cause of the failure in plain language. Runs entirely in your browser.">
+<!-- No external requests: fonts fall back to system fonts if Inter Tight / JetBrains Mono aren't installed. -->
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="sr-only" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top-row">
+    <button type="button" class="brand" id="home" aria-label="SIP Lens, start again">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2B44D9" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M8 9h6M8 13h4M16.5 16.5L21 21"></path></svg>
+      SIP Lens
+    </button>
+    <div class="top-meta" id="top-meta">
+      <span style="display:flex;align-items:center;gap:8px">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6B45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        Runs in your browser. Nothing is uploaded.
+      </span>
+    </div>
+  </div>
+  <nav class="wrap tabs" id="tabs" aria-label="Views" hidden></nav>
+</header>
+
+<main id="main" class="wrap" tabindex="-1">
+
+  <!-- 1. Load a trace -->
+  <section id="view-upload" aria-labelledby="upload-title">
+    <h1 id="upload-title" class="hero-title">Why did this call fail?</h1>
+    <p class="lead">Load a SIP trace. SIP Lens finds where the call went wrong and explains it in plain language.</p>
+
+    <div class="split">
+      <form class="split-main" id="form" novalidate>
+        <div class="drop" id="drop">
+          <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2B44D9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"></path><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path></svg>
+          <p style="font-size:20px;font-weight:500">Drop a trace file here</p>
+          <p class="hint">Text traces (.txt, .log) from sngrep, ngrep or your PBX/SBC</p>
+          <label class="file-btn">Choose file<input type="file" id="file" accept=".txt,.log,.sip,.pcap,.pcapng,text/plain"></label>
+          <p class="hint" id="file-name" aria-live="polite"></p>
+        </div>
+
+        <div class="or"><span class="lbl">or paste text</span></div>
+
+        <div class="field">
+          <label for="paste">Trace text</label>
+          <textarea id="paste" rows="7" spellcheck="false" placeholder="INVITE sip:+3512xxxxxx42@sbc.example.net SIP/2.0&#10;Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK..."></textarea>
+          <p class="hint">Include the lines with addresses (for example <span class="mono">10.0.0.1:5060 -&gt; 10.0.0.2:5060</span>) to get a call diagram.</p>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" id="anon" checked>
+          <span><span style="font-size:16px;font-weight:500">Anonymise phone numbers and IP addresses</span>
+          <span class="hint" style="color:var(--ink-3)">Replaced consistently, so the diagram still makes sense. Private ranges like 192.168.x.x are kept, as they often explain the fault.</span></span>
+        </label>
+
+        <p class="error" id="error" role="alert" hidden></p>
+
+        <div class="row-btns" style="align-items:center">
+          <button type="submit" class="btn btn-primary">Analyse trace</button>
+          <span class="hint">Your trace stays on this device.</span>
+        </div>
+      </form>
+
+      <aside class="split-side" aria-labelledby="samples-title">
+        <h2 id="samples-title" class="lbl">No trace to hand? Try a sample</h2>
+        <ul class="samples" id="samples"></ul>
+        <p class="hint">Samples use fictional numbers and documentation IP ranges.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 2-4. Results (built by app.js) -->
+  <section id="view-diagnosis" hidden></section>
+  <section id="view-diagram" hidden></section>
+  <section id="view-messages" hidden></section>
+</main>
+
+<footer class="foot"><div class="wrap">SIP Lens is an early prototype by Miguel Fernandes. It recognises five common failures; always check its evidence before acting on it.</div></footer>
+
+<script src="src/parser.js"></script>
+<script src="src/rules.js"></script>
+<script src="src/samples.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
