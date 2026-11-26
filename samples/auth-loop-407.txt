@@ -1,0 +1,131 @@
+# Sample trace: authentication loop (407). Fictional numbers, documentation IP ranges.
+U 2026/11/26 10:20:00.000000 198.51.100.77:5060 -> 198.51.100.10:5060
+INVITE sip:+351213000407@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa0
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>
+Call-ID: auth-1290@198.51.100.77
+CSeq: 1 INVITE
+Contact: <sip:305@198.51.100.77:5060>
+Content-Type: application/sdp
+Content-Length: 199
+
+v=0
+o=- 3001 3001 IN IP4 198.51.100.77
+s=-
+c=IN IP4 198.51.100.77
+t=0 0
+m=audio 14000 RTP/AVP 8 0 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:00.004000 198.51.100.10:5060 -> 198.51.100.77:5060
+SIP/2.0 407 Proxy Authentication Required
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa0
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>;tag=px0
+Call-ID: auth-1290@198.51.100.77
+CSeq: 1 INVITE
+Proxy-Authenticate: Digest realm="sbc.example.net", nonce="n1a9f", algorithm=MD5
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.009000 198.51.100.77:5060 -> 198.51.100.10:5060
+ACK sip:+351213000407@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa0
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>;tag=px0
+Call-ID: auth-1290@198.51.100.77
+CSeq: 1 ACK
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.050000 198.51.100.77:5060 -> 198.51.100.10:5060
+INVITE sip:+351213000407@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa1
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>
+Call-ID: auth-1290@198.51.100.77
+CSeq: 2 INVITE
+Contact: <sip:305@198.51.100.77:5060>
+Proxy-Authorization: Digest username="305", realm="sbc.example.net", nonce="n1a9f", uri="sip:+351213000407@sbc.example.net", response="0c7d1e51aa0b", algorithm=MD5
+Content-Type: application/sdp
+Content-Length: 199
+
+v=0
+o=- 3001 3001 IN IP4 198.51.100.77
+s=-
+c=IN IP4 198.51.100.77
+t=0 0
+m=audio 14000 RTP/AVP 8 0 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:00.054000 198.51.100.10:5060 -> 198.51.100.77:5060
+SIP/2.0 407 Proxy Authentication Required
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa1
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>;tag=px1
+Call-ID: auth-1290@198.51.100.77
+CSeq: 2 INVITE
+Proxy-Authenticate: Digest realm="sbc.example.net", nonce="n2a9f", algorithm=MD5
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.059000 198.51.100.77:5060 -> 198.51.100.10:5060
+ACK sip:+351213000407@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa1
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>;tag=px1
+Call-ID: auth-1290@198.51.100.77
+CSeq: 2 ACK
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.100000 198.51.100.77:5060 -> 198.51.100.10:5060
+INVITE sip:+351213000407@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa2
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>
+Call-ID: auth-1290@198.51.100.77
+CSeq: 3 INVITE
+Contact: <sip:305@198.51.100.77:5060>
+Proxy-Authorization: Digest username="305", realm="sbc.example.net", nonce="n2a9f", uri="sip:+351213000407@sbc.example.net", response="0c7d1e52aa0b", algorithm=MD5
+Content-Type: application/sdp
+Content-Length: 199
+
+v=0
+o=- 3001 3001 IN IP4 198.51.100.77
+s=-
+c=IN IP4 198.51.100.77
+t=0 0
+m=audio 14000 RTP/AVP 8 0 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:00.104000 198.51.100.10:5060 -> 198.51.100.77:5060
+SIP/2.0 407 Proxy Authentication Required
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa2
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>;tag=px2
+Call-ID: auth-1290@198.51.100.77
+CSeq: 3 INVITE
+Proxy-Authenticate: Digest realm="sbc.example.net", nonce="n3a9f", algorithm=MD5
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.109000 198.51.100.77:5060 -> 198.51.100.10:5060
+ACK sip:+351213000407@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKa2
+From: "Ext 305" <sip:305@sbc.example.net>;tag=a1
+To: <sip:+351213000407@sbc.example.net>;tag=px2
+Call-ID: auth-1290@198.51.100.77
+CSeq: 3 ACK
+Content-Length: 0
+

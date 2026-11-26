@@ -1,0 +1,311 @@
+# Sample trace: call drops after 32 s, ACK never arrives. Fictional numbers, documentation IP ranges.
+U 2026/11/26 10:20:00.000000 192.0.2.50:5060 -> 198.51.100.10:5060
+INVITE sip:+351221000201@198.51.100.10 SIP/2.0
+Via: SIP/2.0/UDP 192.0.2.50:5060;branch=z9hG4bKc0
+From: <sip:+351912000777@192.0.2.50>;tag=c0
+To: <sip:+351221000201@198.51.100.10>
+Call-ID: carrier-9001@192.0.2.50
+CSeq: 1 INVITE
+Contact: <sip:+351912000777@192.0.2.50:5060>
+Content-Type: application/sdp
+Content-Length: 151
+
+v=0
+o=- 5 5 IN IP4 192.0.2.50
+s=-
+c=IN IP4 192.0.2.50
+t=0 0
+m=audio 40100 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+
+U 2026/11/26 10:20:00.006000 198.51.100.10:5060 -> 203.0.113.24:41872
+INVITE sip:201@192.168.1.45:5060 SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:+351912000777@198.51.100.10:5060>
+Content-Type: application/sdp
+Content-Length: 157
+
+v=0
+o=- 6 6 IN IP4 198.51.100.10
+s=-
+c=IN IP4 198.51.100.10
+t=0 0
+m=audio 30200 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+
+U 2026/11/26 10:20:00.090000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 180 Ringing
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Length: 0
+
+
+U 2026/11/26 10:20:04.200000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:04.204000 198.51.100.10:5060 -> 192.0.2.50:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 192.0.2.50:5060;branch=z9hG4bKc0
+From: <sip:+351912000777@192.0.2.50>;tag=c0
+To: <sip:+351221000201@198.51.100.10>;tag=sx
+Call-ID: carrier-9001@192.0.2.50
+CSeq: 1 INVITE
+Contact: <sip:+351221000201@198.51.100.10:5060>
+Content-Type: application/sdp
+Content-Length: 122
+
+v=0
+o=- 7 7 IN IP4 198.51.100.10
+s=-
+c=IN IP4 198.51.100.10
+t=0 0
+m=audio 30202 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+
+U 2026/11/26 10:20:04.210000 192.0.2.50:5060 -> 198.51.100.10:5060
+ACK sip:+351221000201@198.51.100.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 192.0.2.50:5060;branch=z9hG4bKc1
+From: <sip:+351912000777@192.0.2.50>;tag=c0
+To: <sip:+351221000201@198.51.100.10>;tag=sx
+Call-ID: carrier-9001@192.0.2.50
+CSeq: 1 ACK
+Content-Length: 0
+
+
+U 2026/11/26 10:20:04.212000 198.51.100.10:5060 -> 192.168.1.45:5060
+ACK sip:201@192.168.1.45:5060 SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin2
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 ACK
+Content-Length: 0
+
+
+U 2026/11/26 10:20:04.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:05.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:07.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:11.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:15.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:19.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:23.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:27.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:31.700000 203.0.113.24:41872 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKin1
+From: <sip:+351912000777@198.51.100.10>;tag=in1
+To: <sip:201@192.168.1.45>;tag=ph5
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Content-Type: application/sdp
+Content-Length: 175
+
+v=0
+o=- 20127 20127 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:36.200000 203.0.113.24:41872 -> 198.51.100.10:5060
+BYE sip:+351912000777@198.51.100.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bKby1;rport
+From: <sip:201@192.168.1.45>;tag=ph5
+To: <sip:+351912000777@198.51.100.10>;tag=in1
+Call-ID: sbc-in-3321@198.51.100.10
+CSeq: 1 BYE
+Reason: SIP;cause=408;text="ACK timeout"
+Content-Length: 0
+

@@ -1,0 +1,83 @@
+# Sample trace: codec mismatch (488). Fictional numbers, documentation IP ranges.
+U 2026/11/26 10:20:00.000000 198.51.100.77:5060 -> 198.51.100.10:5060
+INVITE sip:+351213000488@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKc1
+From: "Ext 305" <sip:305@sbc.example.net>;tag=c1
+To: <sip:+351213000488@sbc.example.net>
+Call-ID: cod-4410@198.51.100.77
+CSeq: 1 INVITE
+Contact: <sip:305@198.51.100.77:5060>
+Content-Type: application/sdp
+Content-Length: 177
+
+v=0
+o=- 3001 3001 IN IP4 198.51.100.77
+s=-
+c=IN IP4 198.51.100.77
+t=0 0
+m=audio 14000 RTP/AVP 18 101
+a=rtpmap:18 G729/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:20:00.003000 198.51.100.10:5060 -> 198.51.100.77:5060
+SIP/2.0 100 Trying
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKc1
+From: "Ext 305" <sip:305@sbc.example.net>;tag=c1
+To: <sip:+351213000488@sbc.example.net>
+Call-ID: cod-4410@198.51.100.77
+CSeq: 1 INVITE
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.010000 198.51.100.10:5060 -> 192.0.2.50:5060
+INVITE sip:+351213000488@192.0.2.50 SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKs1
+From: <sip:+351221000305@198.51.100.10>;tag=s1
+To: <sip:+351213000488@192.0.2.50>
+Call-ID: sbc-leg-8812@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:+351221000305@198.51.100.10:5060>
+Content-Type: application/sdp
+Content-Length: 159
+
+v=0
+o=- 1 1 IN IP4 198.51.100.10
+s=-
+c=IN IP4 198.51.100.10
+t=0 0
+m=audio 30010 RTP/AVP 18 101
+a=rtpmap:18 G729/8000
+a=rtpmap:101 telephone-event/8000
+
+U 2026/11/26 10:20:00.118000 192.0.2.50:5060 -> 198.51.100.10:5060
+SIP/2.0 488 Not Acceptable Here
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKs1
+From: <sip:+351221000305@198.51.100.10>;tag=s1
+To: <sip:+351213000488@192.0.2.50>;tag=k9
+Call-ID: sbc-leg-8812@198.51.100.10
+CSeq: 1 INVITE
+Warning: 305 192.0.2.50 "Incompatible media format"
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.122000 198.51.100.10:5060 -> 198.51.100.77:5060
+SIP/2.0 488 Not Acceptable Here
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKc1
+From: "Ext 305" <sip:305@sbc.example.net>;tag=c1
+To: <sip:+351213000488@sbc.example.net>;tag=sb7
+Call-ID: cod-4410@198.51.100.77
+CSeq: 1 INVITE
+Warning: 305 sbc.example.net "Incompatible media format"
+Content-Length: 0
+
+
+U 2026/11/26 10:20:00.130000 198.51.100.77:5060 -> 198.51.100.10:5060
+ACK sip:+351213000488@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.77:5060;branch=z9hG4bKc1
+From: "Ext 305" <sip:305@sbc.example.net>;tag=c1
+To: <sip:+351213000488@sbc.example.net>;tag=sb7
+Call-ID: cod-4410@198.51.100.77
+CSeq: 1 ACK
+Content-Length: 0
+

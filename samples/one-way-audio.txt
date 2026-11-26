@@ -1,0 +1,165 @@
+# Sample trace: one-way audio (captured on the SBC). Fictional numbers, documentation IP ranges.
+U 2026/11/26 10:15:02.000000 203.0.113.24:41872 -> 198.51.100.10:5060
+INVITE sip:+351212345142@sbc.example.net SIP/2.0
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK3f1a9c;rport
+From: "Ext 201" <sip:201@sbc.example.net>;tag=8a91c2
+To: <sip:+351212345142@sbc.example.net>
+Call-ID: 7f3c2b11@192.168.1.45
+CSeq: 1 INVITE
+Contact: <sip:201@192.168.1.45:5060>
+Max-Forwards: 70
+Content-Type: application/sdp
+Content-Length: 231
+
+v=0
+o=- 20126 20126 IN IP4 192.168.1.45
+s=-
+c=IN IP4 192.168.1.45
+t=0 0
+m=audio 12000 RTP/AVP 0 8 101
+a=rtpmap:0 PCMU/8000
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=sendrecv
+
+U 2026/11/26 10:15:02.004000 198.51.100.10:5060 -> 203.0.113.24:41872
+SIP/2.0 100 Trying
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK3f1a9c;rport=41872;received=203.0.113.24
+From: "Ext 201" <sip:201@sbc.example.net>;tag=8a91c2
+To: <sip:+351212345142@sbc.example.net>
+Call-ID: 7f3c2b11@192.168.1.45
+CSeq: 1 INVITE
+Content-Length: 0
+
+U 2026/11/26 10:15:02.011000 198.51.100.10:5060 -> 192.0.2.50:5060
+INVITE sip:+351212345142@192.0.2.50 SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKsbc01
+From: <sip:+351221000201@198.51.100.10>;tag=sbc-a1
+To: <sip:+351212345142@192.0.2.50>
+Call-ID: sbc-leg-5521@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:+351221000201@198.51.100.10:5060>
+Content-Type: application/sdp
+Content-Length: 200
+
+v=0
+o=- 1 1 IN IP4 198.51.100.10
+s=-
+c=IN IP4 198.51.100.10
+t=0 0
+m=audio 30000 RTP/AVP 8 0 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+
+U 2026/11/26 10:15:02.212000 192.0.2.50:5060 -> 198.51.100.10:5060
+SIP/2.0 180 Ringing
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKsbc01
+From: <sip:+351221000201@198.51.100.10>;tag=sbc-a1
+To: <sip:+351212345142@192.0.2.50>;tag=car-77
+Call-ID: sbc-leg-5521@198.51.100.10
+CSeq: 1 INVITE
+Content-Length: 0
+
+U 2026/11/26 10:15:02.215000 198.51.100.10:5060 -> 203.0.113.24:41872
+SIP/2.0 180 Ringing
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK3f1a9c;rport=41872;received=203.0.113.24
+From: "Ext 201" <sip:201@sbc.example.net>;tag=8a91c2
+To: <sip:+351212345142@sbc.example.net>;tag=sbc-b2
+Call-ID: 7f3c2b11@192.168.1.45
+CSeq: 1 INVITE
+Content-Length: 0
+
+U 2026/11/26 10:15:05.804000 192.0.2.50:5060 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKsbc01
+From: <sip:+351221000201@198.51.100.10>;tag=sbc-a1
+To: <sip:+351212345142@192.0.2.50>;tag=car-77
+Call-ID: sbc-leg-5521@198.51.100.10
+CSeq: 1 INVITE
+Contact: <sip:+351212345142@192.0.2.50:5060>
+Content-Type: application/sdp
+Content-Length: 160
+
+v=0
+o=- 9 9 IN IP4 192.0.2.50
+s=-
+c=IN IP4 192.0.2.50
+t=0 0
+m=audio 40000 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+
+U 2026/11/26 10:15:05.808000 198.51.100.10:5060 -> 203.0.113.24:41872
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK3f1a9c;rport=41872;received=203.0.113.24
+From: "Ext 201" <sip:201@sbc.example.net>;tag=8a91c2
+To: <sip:+351212345142@sbc.example.net>;tag=sbc-b2
+Call-ID: 7f3c2b11@192.168.1.45
+CSeq: 1 INVITE
+Contact: <sip:+351212345142@198.51.100.10:5060>
+Content-Type: application/sdp
+Content-Length: 170
+
+v=0
+o=- 2 2 IN IP4 198.51.100.10
+s=-
+c=IN IP4 198.51.100.10
+t=0 0
+m=audio 30002 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+
+U 2026/11/26 10:15:05.871000 203.0.113.24:41872 -> 198.51.100.10:5060
+ACK sip:+351212345142@198.51.100.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK3f1b02;rport
+From: "Ext 201" <sip:201@sbc.example.net>;tag=8a91c2
+To: <sip:+351212345142@sbc.example.net>;tag=sbc-b2
+Call-ID: 7f3c2b11@192.168.1.45
+CSeq: 1 ACK
+Content-Length: 0
+
+U 2026/11/26 10:15:05.875000 198.51.100.10:5060 -> 192.0.2.50:5060
+ACK sip:+351212345142@192.0.2.50:5060 SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKsbc02
+From: <sip:+351221000201@198.51.100.10>;tag=sbc-a1
+To: <sip:+351212345142@192.0.2.50>;tag=car-77
+Call-ID: sbc-leg-5521@198.51.100.10
+CSeq: 1 ACK
+Content-Length: 0
+
+U 2026/11/26 10:15:43.206000 203.0.113.24:41872 -> 198.51.100.10:5060
+BYE sip:+351212345142@198.51.100.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK3f1c77;rport
+From: "Ext 201" <sip:201@sbc.example.net>;tag=8a91c2
+To: <sip:+351212345142@sbc.example.net>;tag=sbc-b2
+Call-ID: 7f3c2b11@192.168.1.45
+CSeq: 2 BYE
+Content-Length: 0
+
+U 2026/11/26 10:15:43.210000 198.51.100.10:5060 -> 192.0.2.50:5060
+BYE sip:+351212345142@192.0.2.50:5060 SIP/2.0
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKsbc03
+From: <sip:+351221000201@198.51.100.10>;tag=sbc-a1
+To: <sip:+351212345142@192.0.2.50>;tag=car-77
+Call-ID: sbc-leg-5521@198.51.100.10
+CSeq: 2 BYE
+Content-Length: 0
+
+U 2026/11/26 10:15:43.288000 192.0.2.50:5060 -> 198.51.100.10:5060
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 198.51.100.10:5060;branch=z9hG4bKsbc03
+From: <sip:+351221000201@198.51.100.10>;tag=sbc-a1
+To: <sip:+351212345142@192.0.2.50>;tag=car-77
+Call-ID: sbc-leg-5521@198.51.100.10
+CSeq: 2 BYE
+Content-Length: 0
+
+U 2026/11/26 10:15:43.292000 198.51.100.10:5060 -> 203.0.113.24:41872
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 192.168.1.45:5060;branch=z9hG4bK3f1c77;rport=41872;received=203.0.113.24
+From: "Ext 201" <sip:201@sbc.example.net>;tag=8a91c2
+To: <sip:+351212345142@sbc.example.net>;tag=sbc-b2
+Call-ID: 7f3c2b11@192.168.1.45
+CSeq: 2 BYE
+Content-Length: 0
